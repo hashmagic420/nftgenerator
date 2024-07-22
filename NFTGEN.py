@@ -2,7 +2,6 @@ import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 from PIL import Image, ImageDraw, ImageOps
 import json
-import io
 
 # Set up the app
 st.title("NFT Generator")
@@ -60,6 +59,7 @@ uploaded_image = st.sidebar.file_uploader("Upload an image", type=["png", "jpg",
 if uploaded_image is not None:
     image = Image.open(uploaded_image)
     image = ImageOps.contain(image, (canvas_width, canvas_height))
+    st.session_state.layers.append({"name": "Uploaded Image", "visible": True, "data": image})
     st.image(image, caption='Uploaded Image', use_column_width=True)
 
 # Drawing canvas for each visible layer
