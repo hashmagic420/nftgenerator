@@ -31,6 +31,9 @@ if 'layers' not in st.session_state:
 if 'saved_data' not in st.session_state:
     st.session_state.saved_data = {}
 
+if 'pixel_art' not in st.session_state:
+    st.session_state.pixel_art = None
+
 # UI Elements
 selected_tool = st.sidebar.selectbox("Select Tool", list(tools.keys()))
 selected_color = st.sidebar.color_picker("Select Color", "#000000")
@@ -66,27 +69,61 @@ if uploaded_image is not None:
     st.session_state.layers.append({"name": "Uploaded Image", "visible": True, "data": image_data.getvalue()})
     st.image(image, caption='Uploaded Image', use_column_width=True)
 
-# Display the drawing canvas
-st.markdown("## Drawing Canvas")
-canvas_result = st_canvas(
-    fill_color="rgba(0, 0, 0, 0)",
-    stroke_width=tool_size,
-    stroke_color=selected_color,
-    background_color="#FFFFFF",
-    width=canvas_width,
-    height=canvas_height,
-    drawing_mode="freedraw",
-    key="canvas",
-)
+# Mode selection
+mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"))
 
-# Combine layers into the canvas
-if canvas_result.image_data is not None:
-    for layer in st.session_state.layers:
-        if layer['visible'] and layer['data'] is not None:
-            image = Image.open(io.BytesIO(layer['data']))
-            image = image.resize((canvas_width, canvas_height))
-            canvas_image = Image.alpha_composite(Image.fromarray(canvas_result.image_data), image)
-            canvas_result.image_data = canvas_image
+if mode == "Free Draw":
+    # Display the drawing canvas
+    st.markdown("## Drawing Canvas")
+    canvas_result = st_canvas(
+        fill_color="rgba(0, 0, 0, 0)",
+        stroke_width=tool_size,
+        stroke_color=selected_color,
+        background_color="#FFFFFF",
+        width=canvas_width,
+        height=canvas_height,
+        drawing_mode="freedraw",
+        key="canvas",
+    )
+
+    # Combine layers into the canvas
+    if canvas_result.image_data is not None:
+        for layer in st.session_state.layers:
+            if layer['visible'] and layer['data'] is not None:
+                image = Image.open(io.BytesIO(layer['data']))
+                image = image.resize((canvas_width, canvas_height))
+                canvas_image = Image.alpha_composite(Image.fromarray(canvas_result.image_data), image)
+                canvas_result.image_data = canvas_image
+
+    # Save the drawn canvas to the layers
+    if canvas_result.image_data is not None:
+        for layer in st.session_state.layers:
+            if layer['visible']:
+                layer['data'] = canvas_result.image_data
+
+elif mode == "Pixel Art":
+    st.markdown("## Pixel Art Canvas")
+    pixel_size = st.sidebar.slider("Pixel Size", 5, 50, 20)
+    rows, cols = canvas_height // pixel_size, canvas_width // pixel_size
+
+    if st.session_state.pixel_art is None:
+        st.session_state.pixel_art = [[(255, 255, 255) for _ in range(cols)] for _ in range(rows)]
+
+    canvas = Image.new("RGB", (canvas_width, canvas_height), (255, 255, 255))
+    draw = ImageDraw.Draw(canvas)
+
+    for row in range(rows):
+        for col in range(cols):
+            color = st.session_state.pixel_art[row][col]
+            draw.rectangle([col * pixel_size, row * pixel_size, (col + 1) * pixel_size, (row + 1) * pixel_size], fill=color)
+
+    click = st.sidebar.button("Apply Color")
+    if click:
+        click_row = st.sidebar.number_input("Row", 0, rows - 1, 0)
+        click_col = st.sidebar.number_input("Col", 0, cols - 1, 0)
+        st.session_state.pixel_art[click_row][click_col] = selected_color
+
+    st.image(canvas, width=canvas_width)
 
 # Save the NFT collection
 if st.button("Save NFT Collection"):
@@ -95,7 +132,8 @@ if st.button("Save NFT Collection"):
     st.session_state.saved_data = {
         "layers": st.session_state.layers,
         "metadata": metadata,
-        "nft_collection": nft_collection
+        "nft_collection": nft_collection,
+        "pixel_art": st.session_state.pixel_art,
     }
     st.success("NFT Collection and state saved successfully!")
 
@@ -105,6 +143,7 @@ if st.button("Load Saved State"):
         st.session_state.layers = st.session_state.saved_data.get("layers", [])
         metadata = st.session_state.saved_data.get("metadata", {})
         nft_collection = st.session_state.saved_data.get("nft_collection", [])
+        st.session_state.pixel_art = st.session_state.saved_data.get("pixel_art", None)
         st.success("Saved state loaded successfully!")
     else:
         st.warning("No saved state found!")
