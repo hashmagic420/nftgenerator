@@ -1,9 +1,7 @@
 import streamlit as st
-import numpy as np
-from PIL import Image, ImageDraw, ImageFont
-import json
-import os
 from streamlit_drawable_canvas import st_canvas
+from PIL import Image
+import json
 
 # Set up the app
 st.title("NFT Generator")
@@ -14,9 +12,9 @@ canvas_width, canvas_height = 800, 600
 
 # Set up the drawing tools
 tools = {
-    "marker": {"color": (0, 0, 0), "size": 5},
-    "sharpie": {"color": (0, 0, 0), "size": 10},
-    "pencil": {"color": (0, 0, 0), "size": 2},
+    "marker": {"size": 5},
+    "sharpie": {"size": 10},
+    "pencil": {"size": 2},
 }
 
 # Set up the color palette
@@ -32,10 +30,8 @@ nft_collection = []
 # UI Elements
 selected_tool = st.sidebar.selectbox("Select Tool", list(tools.keys()))
 selected_color = st.sidebar.selectbox("Select Color", color_names)
-
-# Update the tool with selected color
-if selected_color:
-    tools[selected_tool]["color"] = colors[color_names.index(selected_color)]
+color = colors[color_names.index(selected_color)]
+tool_size = tools[selected_tool]["size"]
 
 st.sidebar.markdown("## Metadata")
 name = st.sidebar.text_input("Name")
@@ -49,8 +45,8 @@ if st.sidebar.button("Add Metadata"):
 # Main app loop
 st.markdown("## Drawing Canvas:")
 canvas_result = st_canvas(
-    stroke_width=tools[selected_tool]["size"],
-    stroke_color=tools[selected_tool]["color"],
+    stroke_width=tool_size,
+    stroke_color=f"rgb{color}",
     background_color="#FFFFFF",
     width=canvas_width,
     height=canvas_height,
