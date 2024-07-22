@@ -66,24 +66,27 @@ if uploaded_image is not None:
     st.session_state.layers.append({"name": "Uploaded Image", "visible": True, "data": image_data.getvalue()})
     st.image(image, caption='Uploaded Image', use_column_width=True)
 
-# Drawing canvas for each visible layer
-canvas_results = []
-for layer in st.session_state.layers:
-    if layer['visible']:
-        st.markdown(f"### Drawing on layer: {layer['name']}")
-        canvas_result = st_canvas(
-            stroke_width=tool_size,
-            stroke_color=selected_color,
-            background_color="#FFFFFF",
-            width=canvas_width,
-            height=canvas_height,
-            drawing_mode="freedraw",
-            key=layer['name'],
-            initial_drawing=layer['data']
-        )
-        if canvas_result.image_data is not None:
-            layer['data'] = canvas_result.image_data
-        canvas_results.append(canvas_result)
+# Display the drawing canvas
+st.markdown("## Drawing Canvas")
+canvas_result = st_canvas(
+    fill_color="rgba(0, 0, 0, 0)",
+    stroke_width=tool_size,
+    stroke_color=selected_color,
+    background_color="#FFFFFF",
+    width=canvas_width,
+    height=canvas_height,
+    drawing_mode="freedraw",
+    key="canvas",
+)
+
+# Combine layers into the canvas
+if canvas_result.image_data is not None:
+    for layer in st.session_state.layers:
+        if layer['visible'] and layer['data'] is not None:
+            image = Image.open(io.BytesIO(layer['data']))
+            image = image.resize((canvas_width, canvas_height))
+            canvas_image = Image.alpha_composite(Image.fromarray(canvas_result.image_data), image)
+            canvas_result.image_data = canvas_image
 
 # Save the NFT collection
 if st.button("Save NFT Collection"):
