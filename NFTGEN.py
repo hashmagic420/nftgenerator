@@ -169,4 +169,3 @@ for i, nft in enumerate(st.session_state.saved_data.get("nft_collection", [])):
         if layer['data'] is not None:
             st.image(layer['data'])
     st.json(nft)
-
