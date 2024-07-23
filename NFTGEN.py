@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw, ImageOps
 import numpy as np
 import io
 import base64
+import json
 
 # Custom CSS for neuromorphic design
 st.markdown("""
@@ -165,17 +166,30 @@ elif mode == "Pixel Art":
     img_html = f'<img src="data:image/png;base64,{data}" usemap="#imagemap">'
     st.markdown(img_html, unsafe_allow_html=True)
 
-    st.markdown("""
-        <map name="imagemap">
-        </map>
-    """, unsafe_allow_html=True)
-
     # Capture click events on the image
     click = st.sidebar.radio("Click to Add Pixel", ("", "Add Pixel"), key="click")
 
     if click == "Add Pixel":
         x = st.sidebar.number_input("X Coordinate", min_value=0, max_value=cols-1, value=0, key="x_coordinate")
         y = st.sidebar.number_input("Y Coordinate", min_value=0, max_value=rows-1, value=0, key="y_coordinate")
+        st.session_state.pixel_art[y, x] = np.array([int(selected_color[i:i+2], 16) for i in (1, 3, 5)])
+        st.experimental_rerun()
+
+    # Update the image map with clickable areas
+    map_areas = ""
+    for row in range(rows):
+        for col in range(cols):
+            map_areas += f'<area shape="rect" coords="{col * pixel_size},{row * pixel_size},{(col + 1) * pixel_size},{(row + 1) * pixel_size}" onclick="location.href=\'/?y={row}&x={col}\'">\n'
+    st.markdown(f"""
+        <map name="imagemap">
+        {map_areas}
+        </map>
+    """, unsafe_allow_html=True)
+
+    query_params = st.experimental_get_query_params()
+    if 'y' in query_params and 'x' in query_params:
+        y = int(query_params['y'][0])
+        x = int(query_params['x'][0])
         st.session_state.pixel_art[y, x] = np.array([int(selected_color[i:i+2], 16) for i in (1, 3, 5)])
         st.experimental_rerun()
 
