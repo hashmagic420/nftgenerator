@@ -70,6 +70,9 @@ if 'pixel_art' not in st.session_state:
 if 'pixel_art_dimensions' not in st.session_state:
     st.session_state.pixel_art_dimensions = (32, 32)
 
+if 'mode' not in st.session_state:
+    st.session_state.mode = "Free Draw"
+
 # UI Elements
 selected_tool = st.sidebar.selectbox("Select Tool", list(tools.keys()), key="selected_tool")
 selected_color = st.sidebar.color_picker("Select Color", "#000000", key="selected_color")
@@ -105,12 +108,10 @@ if uploaded_image is not None:
     st.image(image, caption='Uploaded Image', use_column_width=True)
 
 # Mode selection
-if 'mode' not in st.session_state:
-    st.session_state.mode = "Free Draw"
-mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"), key="mode", index=["Free Draw", "Pixel Art"].index(st.session_state.mode))
+mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"), key="mode")
 st.session_state.mode = mode
 
-if mode == "Free Draw":
+if st.session_state.mode == "Free Draw":
     # Display the drawing canvas
     st.markdown("## Drawing Canvas")
     canvas_result = st_canvas(
@@ -143,7 +144,7 @@ if mode == "Free Draw":
                 image_data.seek(0)
                 layer['data'] = image_data.getvalue()
 
-elif mode == "Pixel Art":
+elif st.session_state.mode == "Pixel Art":
     st.markdown("## Pixel Art Canvas")
     pixel_size = st.sidebar.slider("Pixel Size", 5, 50, 20, key="pixel_size")
     rows = st.sidebar.number_input("Rows", min_value=5, max_value=100, value=st.session_state.pixel_art_dimensions[0], key="rows")
