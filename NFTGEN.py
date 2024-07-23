@@ -95,7 +95,7 @@ for idx, layer in enumerate(st.session_state.layers):
 # Import image
 uploaded_image = st.sidebar.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
 if uploaded_image is not None:
-    image = Image.open(uploaded_image)
+    image = Image.open(uploaded_image).convert("RGBA")
     image = ImageOps.contain(image, (canvas_width, canvas_height))
     image_data = io.BytesIO()
     image.save(image_data, format='PNG')
@@ -122,12 +122,13 @@ if mode == "Free Draw":
 
     # Combine layers into the canvas
     if canvas_result.image_data is not None:
+        canvas_image = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
         for layer in st.session_state.layers:
             if layer['visible'] and layer['data'] is not None:
-                image = Image.open(io.BytesIO(layer['data']))
+                image = Image.open(io.BytesIO(layer['data'])).convert("RGBA")
                 image = image.resize((canvas_width, canvas_height))
-                canvas_image = Image.alpha_composite(Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA'), image)
-                canvas_result.image_data = np.array(canvas_image)
+                canvas_image = Image.alpha_composite(canvas_image, image)
+        canvas_result.image_data = np.array(canvas_image)
 
     # Save the drawn canvas to the layers
     if canvas_result.image_data is not None:
@@ -215,4 +216,4 @@ for i, nft in enumerate(st.session_state.saved_data.get("nft_collection", [])):
     st.json(nft)
 
 # Footer
-st.markdown("<footer>brought to you by: hash.magic 🪄</footer>", unsafe_allow_html=True)
+st.markdown("<footer>brought to you by: hash.magic🧝‍♂️</footer>", unsafe_allow_html=True)
