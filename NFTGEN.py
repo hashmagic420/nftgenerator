@@ -1,6 +1,6 @@
 import streamlit as st
 from streamlit_drawable_canvas import st_canvas
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageDraw
 import json
 import io
 
