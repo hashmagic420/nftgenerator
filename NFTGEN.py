@@ -12,6 +12,9 @@ st.markdown("""
         background-color: #E64A19;
         color: #FFFFFF;
     }
+    .main {
+        background-color: #E64A19;
+    }
     .stButton > button {
         background-color: #000000;
         color: #FFFFFF;
@@ -86,8 +89,8 @@ if st.sidebar.button("Add Layer") and new_layer:
     st.session_state.layers.append({"name": new_layer, "visible": True, "data": None})
     new_layer = ""
 
-for layer in st.session_state.layers:
-    layer['visible'] = st.sidebar.checkbox(layer['name'], value=layer['visible'])
+for idx, layer in enumerate(st.session_state.layers):
+    layer['visible'] = st.sidebar.checkbox(layer['name'], value=layer['visible'], key=f"layer_{idx}")
 
 # Import image
 uploaded_image = st.sidebar.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
