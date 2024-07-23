@@ -134,21 +134,17 @@ elif mode == "Pixel Art":
     )
 
     if click_data.json_data is not None and click_data.json_data["objects"]:
-        last_click = click_data.json_data["objects"][-1]
-        x = int(last_click["left"] // pixel_size)
-        y = int(last_click["top"] // pixel_size)
-        st.session_state.pixel_art[y][x] = tuple(int(selected_color[i:i+2], 16) for i in (1, 3, 5))
-
-    # Display the drawn pixel art
-    drawn_pixel_art = Image.new("RGB", (cols * pixel_size, rows * pixel_size), (255, 255, 255))
-    draw = ImageDraw.Draw(drawn_pixel_art)
-
-    for row in range(rows):
-        for col in range(cols):
-            color = st.session_state.pixel_art[row][col]
-            draw.rectangle([col * pixel_size, row * pixel_size, (col + 1) * pixel_size, (row + 1) * pixel_size], fill=color, outline=(200, 200, 200))
-
-    st.image(drawn_pixel_art, width=canvas_width)
+        try:
+            last_click = click_data.json_data["objects"][-1]
+            x = int(last_click["left"] // pixel_size)
+            y = int(last_click["top"] // pixel_size)
+            if 0 <= x < cols and 0 <= y < rows:
+                st.session_state.pixel_art[y][x] = tuple(int(selected_color[i:i+2], 16) for i in (1, 3, 5))
+                st.experimental_rerun()
+            else:
+                st.error("Click is outside the canvas area.")
+        except Exception as e:
+            st.error(f"Error processing click: {e}")
 
 # Save the NFT collection
 if st.button("Save NFT Collection"):
