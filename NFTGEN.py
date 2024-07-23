@@ -156,7 +156,7 @@ elif mode == "Pixel Art":
         for row in range(rows):
             for col in range(cols):
                 color = tuple(pixel_art[row, col])
-                draw.rectangle([col * pixel_size, row * pixel_size, (col + 1) * pixel_size, (row + 1) * pixel_size], fill=color)
+                draw.rectangle([col * pixel_size, row * pixel_size, (col + 1) * pixel_size, (row + 1) * pixel_size], fill=color, outline=(0, 0, 0))
         return img
 
     pixel_art_img = draw_pixel_art(st.session_state.pixel_art, pixel_size)
@@ -167,30 +167,18 @@ elif mode == "Pixel Art":
     st.markdown(img_html, unsafe_allow_html=True)
 
     # Capture click events on the image
-    click = st.sidebar.radio("Click to Add Pixel", ("", "Add Pixel"), key="click")
-
-    if click == "Add Pixel":
-        x = st.sidebar.number_input("X Coordinate", min_value=0, max_value=cols-1, value=0, key="x_coordinate")
-        y = st.sidebar.number_input("Y Coordinate", min_value=0, max_value=rows-1, value=0, key="y_coordinate")
-        st.session_state.pixel_art[y, x] = np.array([int(selected_color[i:i+2], 16) for i in (1, 3, 5)])
-        st.experimental_rerun()
-
-    # Update the image map with clickable areas
-    map_areas = ""
-    for row in range(rows):
-        for col in range(cols):
-            map_areas += f'<area shape="rect" coords="{col * pixel_size},{row * pixel_size},{(col + 1) * pixel_size},{(row + 1) * pixel_size}" onclick="location.href=\'/?y={row}&x={col}\'">\n'
     st.markdown(f"""
         <map name="imagemap">
-        {map_areas}
+        {"".join([f'<area shape="rect" coords="{col * pixel_size},{row * pixel_size},{(col + 1) * pixel_size},{(row + 1) * pixel_size}" href="?row={row}&col={col}&color={selected_color[1:]}" alt="pixel">' for row in range(rows) for col in range(cols)])}
         </map>
     """, unsafe_allow_html=True)
 
     query_params = st.experimental_get_query_params()
-    if 'y' in query_params and 'x' in query_params:
-        y = int(query_params['y'][0])
-        x = int(query_params['x'][0])
-        st.session_state.pixel_art[y, x] = np.array([int(selected_color[i:i+2], 16) for i in (1, 3, 5)])
+    if 'row' in query_params and 'col' in query_params and 'color' in query_params:
+        row = int(query_params['row'][0])
+        col = int(query_params['col'][0])
+        color = query_params['color'][0]
+        st.session_state.pixel_art[row, col] = np.array([int(color[i:i+2], 16) for i in (0, 2, 4)])
         st.experimental_rerun()
 
 # Save the NFT collection
