@@ -35,7 +35,7 @@ if 'pixel_art' not in st.session_state:
     st.session_state.pixel_art = None
 
 if 'pixel_art_dimensions' not in st.session_state:
-    st.session_state.pixel_art_dimensions = (16, 16)
+    st.session_state.pixel_art_dimensions = (32, 32)
 
 # UI Elements
 selected_tool = st.sidebar.selectbox("Select Tool", list(tools.keys()))
@@ -149,7 +149,7 @@ if st.button("Load Saved State"):
         metadata = st.session_state.saved_data.get("metadata", {})
         nft_collection = st.session_state.saved_data.get("nft_collection", [])
         st.session_state.pixel_art = st.session_state.saved_data.get("pixel_art", None)
-        st.session_state.pixel_art_dimensions = st.session_state.saved_data.get("pixel_art_dimensions", (16, 16))
+        st.session_state.pixel_art_dimensions = st.session_state.saved_data.get("pixel_art_dimensions", (32, 32))
         st.success("Saved state loaded successfully!")
     else:
         st.warning("No saved state found!")
