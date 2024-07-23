@@ -120,12 +120,12 @@ elif mode == "Pixel Art":
     for row in range(rows):
         for col in range(cols):
             color = st.session_state.pixel_art[row][col]
-            draw.rectangle([col * pixel_size, row * pixel_size, (col + 1) * pixel_size, (row + 1) * pixel_size], fill=color)
+            draw.rectangle([col * pixel_size, row * pixel_size, (col + 1) * pixel_size, (row + 1) * pixel_size], fill=color, outline=(200, 200, 200))
 
     st.image(canvas, width=canvas_width)
 
-    click_row = st.number_input("Row to Color", 0, rows - 1, 0)
-    click_col = st.number_input("Col to Color", 0, cols - 1, 0)
+    click_row = st.number_input("Row to Color", 0, rows - 1, 0, key="row_input")
+    click_col = st.number_input("Col to Color", 0, cols - 1, 0, key="col_input")
     if st.button("Apply Color"):
         st.session_state.pixel_art[click_row][click_col] = selected_color
 
