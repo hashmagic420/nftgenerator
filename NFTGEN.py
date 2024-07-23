@@ -109,7 +109,9 @@ if uploaded_image is not None:
 
 # Mode selection
 mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"), key="mode")
-st.session_state.mode = mode
+
+if mode != st.session_state.mode:
+    st.session_state.mode = mode
 
 if st.session_state.mode == "Free Draw":
     # Display the drawing canvas
