@@ -74,11 +74,10 @@ if 'mode' not in st.session_state:
     st.session_state.mode = "Free Draw"
 
 # Handle the mode selection
-mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"))
+def set_mode():
+    st.session_state.mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"))
 
-# Update the session state mode before creating widgets
-if mode != st.session_state.mode:
-    st.session_state.mode = mode
+set_mode()
 
 # UI Elements
 selected_tool = st.sidebar.selectbox("Select Tool", list(tools.keys()), key="selected_tool")
