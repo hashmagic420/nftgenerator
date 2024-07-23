@@ -1,23 +1,40 @@
 import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 from PIL import Image, ImageDraw, ImageOps
-import json
 import io
-import numpy as np
 
 # Set up the app
+st.set_page_config(page_title="NFT Generator", page_icon=":art:", layout="wide")
+st.markdown(
+    """
+    <style>
+        .main {
+            background-color: #E64A19;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 10px 10px 20px #cc3e17, -10px -10px 20px #ff5421;
+        }
+        .block-container {
+            padding-top: 20px;
+            padding-bottom: 20px;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+        .stButton>button {
+            border-radius: 10px;
+            background: linear-gradient(145deg, #cc3e17, #ff5421);
+            box-shadow: 5px 5px 10px #cc3e17, -5px -5px 10px #ff5421;
+            color: white;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 st.title("NFT Generator")
-st.markdown("# NFT Generator")
 
 # Set up the canvas dimensions
 canvas_width, canvas_height = 800, 600
-
-# Set up the drawing tools
-tools = {
-    "marker": {"size": 5},
-    "sharpie": {"size": 10},
-    "pencil": {"size": 2},
-}
 
 # Initialize session state for layers and saved data
 if 'layers' not in st.session_state:
@@ -33,9 +50,8 @@ if 'pixel_art_dimensions' not in st.session_state:
     st.session_state.pixel_art_dimensions = (32, 32)
 
 # UI Elements
-selected_tool = st.sidebar.selectbox("Select Tool", list(tools.keys()))
+st.sidebar.title("Settings")
 selected_color = st.sidebar.color_picker("Select Color", "#000000")
-tool_size = tools[selected_tool]["size"]
 
 st.sidebar.markdown("## Metadata")
 name = st.sidebar.text_input("Name")
@@ -74,7 +90,7 @@ if mode == "Free Draw":
     st.markdown("## Drawing Canvas")
     canvas_result = st_canvas(
         fill_color="rgba(0, 0, 0, 0)",
-        stroke_width=tool_size,
+        stroke_width=2,
         stroke_color=selected_color,
         background_color="#FFFFFF",
         width=canvas_width,
@@ -82,15 +98,6 @@ if mode == "Free Draw":
         drawing_mode="freedraw",
         key="canvas",
     )
-
-    # Combine layers into the canvas
-    if canvas_result.image_data is not None:
-        for layer in st.session_state.layers:
-            if layer['visible'] and layer['data'] is not None:
-                image = Image.open(io.BytesIO(layer['data']))
-                image = image.resize((canvas_width, canvas_height))
-                canvas_image = Image.alpha_composite(Image.fromarray(canvas_result.image_data), image)
-                canvas_result.image_data = canvas_image
 
     # Save the drawn canvas to the layers
     if canvas_result.image_data is not None:
@@ -116,9 +123,6 @@ elif mode == "Pixel Art":
             color = st.session_state.pixel_art[row][col]
             draw.rectangle([col * pixel_size, row * pixel_size, (col + 1) * pixel_size, (row + 1) * pixel_size], fill=color, outline=(200, 200, 200))
 
-    st.image(canvas, width=canvas_width)
-
-    # Handle clicks
     click_data = st_canvas(
         fill_color="rgba(0, 0, 0, 0)",
         stroke_width=0,
@@ -130,7 +134,7 @@ elif mode == "Pixel Art":
         key="pixel_canvas",
     )
 
-    if click_data.json_data and click_data.json_data["objects"]:
+    if click_data.json_data is not None:
         for obj in click_data.json_data["objects"]:
             x = int(obj["left"] // pixel_size)
             y = int(obj["top"] // pixel_size)
