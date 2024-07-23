@@ -19,12 +19,6 @@ tools = {
     "pencil": {"size": 2},
 }
 
-# Set up the metadata
-metadata = {}
-
-# Set up the NFT collection
-nft_collection = []
-
 # Initialize session state for layers and saved data
 if 'layers' not in st.session_state:
     st.session_state.layers = []
@@ -48,9 +42,8 @@ name = st.sidebar.text_input("Name")
 description = st.sidebar.text_area("Description")
 
 if st.sidebar.button("Add Metadata"):
-    metadata["name"] = name
-    metadata["description"] = description
-    nft_collection.append(metadata)
+    metadata = {"name": name, "description": description}
+    st.session_state.saved_data["metadata"] = metadata
 
 # Layer management
 st.sidebar.markdown("## Layers")
@@ -146,34 +139,27 @@ elif mode == "Pixel Art":
 # Save the NFT collection
 if st.button("Save NFT Collection"):
     with open("nft_collection.json", "w") as f:
-        json.dump(nft_collection, f)
-    st.session_state.saved_data = {
-        "layers": st.session_state.layers,
-        "metadata": metadata,
-        "nft_collection": nft_collection,
-        "pixel_art": st.session_state.pixel_art,
-        "pixel_art_dimensions": st.session_state.pixel_art_dimensions,
-    }
+        json.dump(st.session_state.saved_data, f)
     st.success("NFT Collection and state saved successfully!")
 
 # Load saved state
 if st.button("Load Saved State"):
-    if st.session_state.saved_data:
+    try:
+        with open("nft_collection.json", "r") as f:
+            st.session_state.saved_data = json.load(f)
         st.session_state.layers = st.session_state.saved_data.get("layers", [])
         metadata = st.session_state.saved_data.get("metadata", {})
-        nft_collection = st.session_state.saved_data.get("nft_collection", [])
         st.session_state.pixel_art = st.session_state.saved_data.get("pixel_art", None)
         st.session_state.pixel_art_dimensions = st.session_state.saved_data.get("pixel_art_dimensions", (32, 32))
         st.success("Saved state loaded successfully!")
-    else:
+    except FileNotFoundError:
         st.warning("No saved state found!")
 
 # Display the NFT collection
 st.markdown("## NFT Collection:")
-for i, nft in enumerate(nft_collection):
+for i, nft in enumerate(st.session_state.saved_data.get("nft_collection", [])):
     st.markdown(f"NFT {i+1}:")
     for layer in st.session_state.layers:
         if layer['data'] is not None:
             st.image(layer['data'])
     st.json(nft)
-
