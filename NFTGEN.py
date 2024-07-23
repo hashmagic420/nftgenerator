@@ -70,22 +70,22 @@ if 'pixel_art_dimensions' not in st.session_state:
     st.session_state.pixel_art_dimensions = (32, 32)
 
 # UI Elements
-selected_tool = st.sidebar.selectbox("Select Tool", list(tools.keys()))
-selected_color = st.sidebar.color_picker("Select Color", "#000000")
+selected_tool = st.sidebar.selectbox("Select Tool", list(tools.keys()), key="selected_tool")
+selected_color = st.sidebar.color_picker("Select Color", "#000000", key="selected_color")
 tool_size = tools[selected_tool]["size"]
 
 st.sidebar.markdown("## Metadata")
-name = st.sidebar.text_input("Name")
-description = st.sidebar.text_area("Description")
+name = st.sidebar.text_input("Name", key="name")
+description = st.sidebar.text_area("Description", key="description")
 
-if st.sidebar.button("Add Metadata"):
+if st.sidebar.button("Add Metadata", key="add_metadata"):
     metadata = {"name": name, "description": description}
     st.session_state.saved_data["metadata"] = metadata
 
 # Layer management
 st.sidebar.markdown("## Layers")
-new_layer = st.sidebar.text_input("New Layer Name")
-if st.sidebar.button("Add Layer") and new_layer:
+new_layer = st.sidebar.text_input("New Layer Name", key="new_layer")
+if st.sidebar.button("Add Layer", key="add_layer") and new_layer:
     st.session_state.layers.append({"name": new_layer, "visible": True, "data": None})
     new_layer = ""
 
@@ -93,7 +93,7 @@ for idx, layer in enumerate(st.session_state.layers):
     layer['visible'] = st.sidebar.checkbox(layer['name'], value=layer['visible'], key=f"layer_{idx}")
 
 # Import image
-uploaded_image = st.sidebar.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
+uploaded_image = st.sidebar.file_uploader("Upload an image", type=["png", "jpg", "jpeg"], key="uploaded_image")
 if uploaded_image is not None:
     image = Image.open(uploaded_image).convert("RGBA")
     image = ImageOps.contain(image, (canvas_width, canvas_height))
@@ -104,7 +104,7 @@ if uploaded_image is not None:
     st.image(image, caption='Uploaded Image', use_column_width=True)
 
 # Mode selection
-mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"))
+mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"), key="mode")
 
 if mode == "Free Draw":
     # Display the drawing canvas
@@ -141,10 +141,9 @@ if mode == "Free Draw":
 
 elif mode == "Pixel Art":
     st.markdown("## Pixel Art Canvas")
-    pixel_size = st.sidebar.slider("Pixel Size", 5, 50, 20)
-    rows = st.sidebar.number_input("Rows", min_value=5, max_value=100, value=st.session_state.pixel_art_dimensions[0])
-    cols = st.sidebar.number_input("Columns", min_value=5, max_value=100, value=st.session_state.pixel_art_dimensions[1])
-    selected_color = st.sidebar.color_picker("Select Color", "#000000")
+    pixel_size = st.sidebar.slider("Pixel Size", 5, 50, 20, key="pixel_size")
+    rows = st.sidebar.number_input("Rows", min_value=5, max_value=100, value=st.session_state.pixel_art_dimensions[0], key="rows")
+    cols = st.sidebar.number_input("Columns", min_value=5, max_value=100, value=st.session_state.pixel_art_dimensions[1], key="cols")
 
     if st.session_state.pixel_art is None or st.session_state.pixel_art_dimensions != (rows, cols):
         st.session_state.pixel_art_dimensions = (rows, cols)
@@ -172,16 +171,16 @@ elif mode == "Pixel Art":
     """, unsafe_allow_html=True)
 
     # Capture click events on the image
-    click = st.sidebar.radio("Click to Add Pixel", ("", "Add Pixel"))
+    click = st.sidebar.radio("Click to Add Pixel", ("", "Add Pixel"), key="click")
 
     if click == "Add Pixel":
-        x = st.sidebar.number_input("X Coordinate", min_value=0, max_value=cols-1, value=0)
-        y = st.sidebar.number_input("Y Coordinate", min_value=0, max_value=rows-1, value=0)
+        x = st.sidebar.number_input("X Coordinate", min_value=0, max_value=cols-1, value=0, key="x_coordinate")
+        y = st.sidebar.number_input("Y Coordinate", min_value=0, max_value=rows-1, value=0, key="y_coordinate")
         st.session_state.pixel_art[y, x] = np.array([int(selected_color[i:i+2], 16) for i in (1, 3, 5)])
         st.experimental_rerun()
 
 # Save the NFT collection
-if st.button("Save NFT Collection"):
+if st.button("Save NFT Collection", key="save_collection"):
     st.session_state.saved_data["layers"] = st.session_state.layers
     st.session_state.saved_data["pixel_art"] = st.session_state.pixel_art
     st.session_state.saved_data["pixel_art_dimensions"] = st.session_state.pixel_art_dimensions
@@ -190,7 +189,7 @@ if st.button("Save NFT Collection"):
     st.success("NFT Collection and state saved successfully!")
 
 # Load saved state
-if st.button("Load Saved State"):
+if st.button("Load Saved State", key="load_collection"):
     try:
         with open("nft_collection.json", "r") as f:
             st.session_state.saved_data = json.load(f)
