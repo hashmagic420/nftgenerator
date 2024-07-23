@@ -5,6 +5,40 @@ import json
 import io
 import numpy as np
 
+# Custom CSS for neuromorphic design
+st.markdown("""
+    <style>
+    body {
+        background-color: #E64A19;
+        color: #FFFFFF;
+    }
+    .stButton > button {
+        background-color: #000000;
+        color: #FFFFFF;
+        border-radius: 12px;
+        box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.3), -5px -5px 15px 5px rgba(255,152,0,0.3);
+    }
+    .stTextInput > div > div > input,
+    .stTextArea > div > textarea,
+    .stFileUploader > div > div > div > button,
+    .stSelectbox > div > div > select,
+    .stSlider > div > div > div > div,
+    .stRadio > div > label > div,
+    .stSidebar > div > div {
+        background-color: #FFFFFF;
+        color: #000000;
+        border-radius: 12px;
+        box-shadow: 5px 5px 15px 5px rgba(0,0,0,0.3), -5px -5px 15px 5px rgba(255,152,0,0.3);
+    }
+    footer {
+        font-size: 18px;
+        color: #FFFFFF;
+        text-align: center;
+        margin-top: 20px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # Set up the app
 st.title("NFT Generator")
 st.markdown("# NFT Generator")
@@ -176,3 +210,6 @@ for i, nft in enumerate(st.session_state.saved_data.get("nft_collection", [])):
         if layer['data'] is not None:
             st.image(layer['data'])
     st.json(nft)
+
+# Footer
+st.markdown("<footer>brought to you by: hash.magic 🪄</footer>", unsafe_allow_html=True)
