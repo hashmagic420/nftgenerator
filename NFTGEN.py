@@ -130,11 +130,18 @@ elif mode == "Pixel Art":
         key="pixel_canvas",
     )
 
-    if click_data.json_data is not None and click_data.json_data["objects"]:
-        last_click = click_data.json_data["objects"][-1]
-        x = int(last_click["left"] // pixel_size)
-        y = int(last_click["top"] // pixel_size)
-        st.session_state.pixel_art[y][x] = selected_color
+    if click_data.json_data and click_data.json_data["objects"]:
+        for obj in click_data.json_data["objects"]:
+            x = int(obj["left"] // pixel_size)
+            y = int(obj["top"] // pixel_size)
+            st.session_state.pixel_art[y][x] = selected_color
+
+        # Redraw the canvas with the updated pixel art
+        for row in range(rows):
+            for col in range(cols):
+                color = st.session_state.pixel_art[row][col]
+                draw.rectangle([col * pixel_size, row * pixel_size, (col + 1) * pixel_size, (row + 1) * pixel_size], fill=color, outline=(200, 200, 200))
+        st.image(canvas, width=canvas_width)
 
 # Save the NFT collection
 if st.button("Save NFT Collection"):
