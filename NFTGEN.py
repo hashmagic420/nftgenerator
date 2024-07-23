@@ -34,6 +34,9 @@ if 'saved_data' not in st.session_state:
 if 'pixel_art' not in st.session_state:
     st.session_state.pixel_art = None
 
+if 'pixel_art_dimensions' not in st.session_state:
+    st.session_state.pixel_art_dimensions = (16, 16)
+
 # UI Elements
 selected_tool = st.sidebar.selectbox("Select Tool", list(tools.keys()))
 selected_color = st.sidebar.color_picker("Select Color", "#000000")
@@ -104,12 +107,14 @@ if mode == "Free Draw":
 elif mode == "Pixel Art":
     st.markdown("## Pixel Art Canvas")
     pixel_size = st.sidebar.slider("Pixel Size", 5, 50, 20)
-    rows, cols = canvas_height // pixel_size, canvas_width // pixel_size
+    rows = st.sidebar.number_input("Rows", min_value=5, max_value=100, value=st.session_state.pixel_art_dimensions[0])
+    cols = st.sidebar.number_input("Columns", min_value=5, max_value=100, value=st.session_state.pixel_art_dimensions[1])
 
-    if st.session_state.pixel_art is None:
+    if st.session_state.pixel_art is None or st.session_state.pixel_art_dimensions != (rows, cols):
+        st.session_state.pixel_art_dimensions = (rows, cols)
         st.session_state.pixel_art = [[(255, 255, 255) for _ in range(cols)] for _ in range(rows)]
 
-    canvas = Image.new("RGB", (canvas_width, canvas_height), (255, 255, 255))
+    canvas = Image.new("RGB", (cols * pixel_size, rows * pixel_size), (255, 255, 255))
     draw = ImageDraw.Draw(canvas)
 
     for row in range(rows):
@@ -117,13 +122,12 @@ elif mode == "Pixel Art":
             color = st.session_state.pixel_art[row][col]
             draw.rectangle([col * pixel_size, row * pixel_size, (col + 1) * pixel_size, (row + 1) * pixel_size], fill=color)
 
-    click = st.sidebar.button("Apply Color")
-    if click:
-        click_row = st.sidebar.number_input("Row", 0, rows - 1, 0)
-        click_col = st.sidebar.number_input("Col", 0, cols - 1, 0)
-        st.session_state.pixel_art[click_row][click_col] = selected_color
-
     st.image(canvas, width=canvas_width)
+
+    click_row = st.number_input("Row to Color", 0, rows - 1, 0)
+    click_col = st.number_input("Col to Color", 0, cols - 1, 0)
+    if st.button("Apply Color"):
+        st.session_state.pixel_art[click_row][click_col] = selected_color
 
 # Save the NFT collection
 if st.button("Save NFT Collection"):
@@ -134,6 +138,7 @@ if st.button("Save NFT Collection"):
         "metadata": metadata,
         "nft_collection": nft_collection,
         "pixel_art": st.session_state.pixel_art,
+        "pixel_art_dimensions": st.session_state.pixel_art_dimensions,
     }
     st.success("NFT Collection and state saved successfully!")
 
@@ -144,6 +149,7 @@ if st.button("Load Saved State"):
         metadata = st.session_state.saved_data.get("metadata", {})
         nft_collection = st.session_state.saved_data.get("nft_collection", [])
         st.session_state.pixel_art = st.session_state.saved_data.get("pixel_art", None)
+        st.session_state.pixel_art_dimensions = st.session_state.saved_data.get("pixel_art_dimensions", (16, 16))
         st.success("Saved state loaded successfully!")
     else:
         st.warning("No saved state found!")
