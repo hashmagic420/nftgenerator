@@ -73,6 +73,13 @@ if 'pixel_art_dimensions' not in st.session_state:
 if 'mode' not in st.session_state:
     st.session_state.mode = "Free Draw"
 
+# Handle the mode selection
+mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"))
+
+# Update the session state mode before creating widgets
+if mode != st.session_state.mode:
+    st.session_state.mode = mode
+
 # UI Elements
 selected_tool = st.sidebar.selectbox("Select Tool", list(tools.keys()), key="selected_tool")
 selected_color = st.sidebar.color_picker("Select Color", "#000000", key="selected_color")
@@ -106,12 +113,6 @@ if uploaded_image is not None:
     image_data.seek(0)
     st.session_state.layers.append({"name": "Uploaded Image", "visible": True, "data": image_data.getvalue()})
     st.image(image, caption='Uploaded Image', use_column_width=True)
-
-# Mode selection
-mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"), key="mode")
-
-if mode != st.session_state.mode:
-    st.session_state.mode = mode
 
 if st.session_state.mode == "Free Draw":
     # Display the drawing canvas
