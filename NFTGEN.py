@@ -43,13 +43,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Set up the drawing tools
-tools = {
-    "marker": {"size": 5},
-    "sharpie": {"size": 10},
-    "pencil": {"size": 2},
-}
-
 # Initialize session state for layers, saved data, and pixel art
 if 'layers' not in st.session_state:
     st.session_state.layers = []
@@ -73,11 +66,18 @@ st.markdown("# NFT Generator")
 # Set up the canvas dimensions
 canvas_width, canvas_height = 800, 600
 
+# Set up the drawing tools
+tools = {
+    "marker": {"size": 5},
+    "sharpie": {"size": 10},
+    "pencil": {"size": 2},
+}
+
 # Handle the mode selection
 def set_mode():
-    if "mode" in st.session_state:
-        return
-    st.session_state.mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"))
+    if "mode" not in st.session_state:
+        st.session_state.mode = "Free Draw"
+    st.session_state.mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"), key="mode")
 
 set_mode()
 
