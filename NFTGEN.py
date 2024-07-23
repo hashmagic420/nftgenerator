@@ -137,11 +137,12 @@ elif mode == "Pixel Art":
         key="pixel_canvas",
     )
 
-    if click_data.json_data["objects"]:
-        last_click = click_data.json_data["objects"][-1]
-        x = int(last_click["left"] // pixel_size)
-        y = int(last_click["top"] // pixel_size)
-        st.session_state.pixel_art[y][x] = selected_color
+    if click_data.json_data is not None:
+        if click_data.json_data["objects"]:
+            last_click = click_data.json_data["objects"][-1]
+            x = int(last_click["left"] // pixel_size)
+            y = int(last_click["top"] // pixel_size)
+            st.session_state.pixel_art[y][x] = selected_color
 
 # Save the NFT collection
 if st.button("Save NFT Collection"):
