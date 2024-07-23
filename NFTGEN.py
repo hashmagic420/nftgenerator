@@ -185,7 +185,13 @@ elif st.session_state.mode == "Pixel Art":
         col = int(query_params['col'][0])
         color = query_params['color'][0]
         st.session_state.pixel_art[row, col] = np.array([int(color[i:i+2], 16) for i in (0, 2, 4)])
-        st.experimental_rerun()
+        # Instead of reloading the entire page, clear the query parameters to stay in pixel art mode
+        st.experimental_set_query_params()
+
+    pixel_art_img = draw_pixel_art(st.session_state.pixel_art, pixel_size)
+    buf = io.BytesIO()
+    pixel_art_img.save(buf, format="PNG")
+    st.image(pixel_art_img, use_column_width=True)
 
 # Save the NFT collection
 if st.button("Save NFT Collection", key="save_collection"):
