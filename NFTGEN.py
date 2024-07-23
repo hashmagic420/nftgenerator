@@ -105,7 +105,10 @@ if uploaded_image is not None:
     st.image(image, caption='Uploaded Image', use_column_width=True)
 
 # Mode selection
-mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"), key="mode")
+if 'mode' not in st.session_state:
+    st.session_state.mode = "Free Draw"
+mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"), key="mode", index=["Free Draw", "Pixel Art"].index(st.session_state.mode))
+st.session_state.mode = mode
 
 if mode == "Free Draw":
     # Display the drawing canvas
