@@ -1,176 +1,125 @@
-import streamlit as st
-from streamlit_drawable_canvas import st_canvas
-from PIL import Image, ImageDraw, ImageOps
-import io
+import tkinter as tk
+from tkinter.colorchooser import askcolor
+from tkinter import simpledialog
 
-# Set up the app
-st.set_page_config(page_title="NFT Generator", page_icon=":art:", layout="wide")
-st.markdown(
-    """
-    <style>
-        .main {
-            background-color: #E64A19;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 10px 10px 20px #cc3e17, -10px -10px 20px #ff5421;
-        }
-        .block-container {
-            padding-top: 20px;
-            padding-bottom: 20px;
-            padding-left: 20px;
-            padding-right: 20px;
-        }
-        .stButton>button {
-            border-radius: 10px;
-            background: linear-gradient(145deg, #cc3e17, #ff5421);
-            box-shadow: 5px 5px 10px #cc3e17, -5px -5px 10px #ff5421;
-            color: white;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+class PixelArtEditor:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Neuromorphic Pixel Art Editor")
+        self.root.configure(bg='#b04e0f')
 
-st.title("NFT Generator")
+        self.canvas_size = (34, 23)
+        self.current_color = "#000000"
+        self.current_tool = "draw"
+        self.custom_stamps = {}
 
-# Set up the canvas dimensions
-canvas_width, canvas_height = 800, 600
+        self.setup_ui()
 
-# Initialize session state for layers and saved data
-if 'layers' not in st.session_state:
-    st.session_state.layers = []
+    def setup_ui(self):
+        toolbar_frame = tk.Frame(self.root, bg='#333')
+        toolbar_frame.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
 
-if 'saved_data' not in st.session_state:
-    st.session_state.saved_data = {}
+        tools = ["New", "Draw", "Erase", "Fill", "Color Picker", "Stamp", "Create"]
+        for tool in tools:
+            button = tk.Button(toolbar_frame, text=tool, bg='#555', fg='#f0f0f0', command=lambda t=tool: self.select_tool(t))
+            button.pack(side=tk.LEFT, padx=5, pady=5)
 
-if 'pixel_art' not in st.session_state:
-    st.session_state.pixel_art = None
+        self.pixel_grid = tk.Frame(self.root, bg='#333')
+        self.pixel_grid.pack(pady=20)
+        self.create_grid()
 
-if 'pixel_art_dimensions' not in st.session_state:
-    st.session_state.pixel_art_dimensions = (32, 32)
+        properties_frame = tk.Frame(self.root, bg='#333')
+        properties_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=20, pady=10)
 
-# UI Elements
-st.sidebar.title("Settings")
-selected_color = st.sidebar.color_picker("Select Color", "#000000")
+        self.color_label = tk.Label(properties_frame, text="Color: ", bg='#333', fg='#f0f0f0')
+        self.color_label.pack(side=tk.LEFT, padx=5)
+        self.color_display = tk.Label(properties_frame, bg=self.current_color, width=2, height=1)
+        self.color_display.pack(side=tk.LEFT, padx=5)
 
-st.sidebar.markdown("## Metadata")
-name = st.sidebar.text_input("Name")
-description = st.sidebar.text_area("Description")
+        self.canvas_size_label = tk.Label(properties_frame, text="Canvas Size: 34x23", bg='#333', fg='#f0f0f0', cursor="hand2")
+        self.canvas_size_label.pack(side=tk.LEFT, padx=5)
+        self.canvas_size_label.bind("<Button-1>", self.change_canvas_size)
 
-if st.sidebar.button("Add Metadata"):
-    metadata = {"name": name, "description": description}
-    st.session_state.saved_data["metadata"] = metadata
+        export_button = tk.Button(properties_frame, text="Export", bg='#555', fg='#f0f0f0', command=self.export_art)
+        export_button.pack(side=tk.RIGHT, padx=5)
 
-# Layer management
-st.sidebar.markdown("## Layers")
-new_layer = st.sidebar.text_input("New Layer Name")
-if st.sidebar.button("Add Layer") and new_layer:
-    st.session_state.layers.append({"name": new_layer, "visible": True, "data": None})
-    new_layer = ""
+        color_picker_frame = tk.Frame(properties_frame, bg='#333')
+        color_picker_frame.pack(side=tk.RIGHT, padx=5)
 
-for layer in st.session_state.layers:
-    layer['visible'] = st.sidebar.checkbox(layer['name'], value=layer['visible'])
+        colors = [
+            '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
+            '#800000', '#808000', '#008000', '#800080', '#808080', '#C0C0C0', '#FFA500', '#A52A2A',
+            '#8B0000', '#A9A9A9', '#2F4F4F', '#00CED1', '#ADFF2F', '#DAA520', '#F0E68C', '#DDA0DD',
+            '#F5DEB3', '#D2691E', '#8A2BE2', '#5F9EA0', '#7FFF00', '#D2691E', '#FF7F50', '#6495ED',
+            '#DC143C', '#00FFFF', '#00008B', '#008B8B', '#B8860B', '#A9A9A9', '#006400', '#BDB76B'
+        ]
 
-# Import image
-uploaded_image = st.sidebar.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
-if uploaded_image is not None:
-    image = Image.open(uploaded_image)
-    image = ImageOps.contain(image, (canvas_width, canvas_height))
-    image_data = io.BytesIO()
-    image.save(image_data, format='PNG')
-    image_data.seek(0)
-    st.session_state.layers.append({"name": "Uploaded Image", "visible": True, "data": image_data.getvalue()})
-    st.image(image, caption='Uploaded Image', use_column_width=True)
+        for color in colors:
+            color_button = tk.Button(color_picker_frame, bg=color, width=2, height=1, command=lambda c=color: self.select_color(c))
+            color_button.pack(side=tk.LEFT, padx=2)
 
-# Mode selection
-mode = st.sidebar.radio("Select Mode", ("Free Draw", "Pixel Art"))
+    def create_grid(self):
+        for row in range(self.canvas_size[1]):
+            for col in range(self.canvas_size[0]):
+                pixel = tk.Label(self.pixel_grid, bg='#888', width=2, height=1, borderwidth=1, relief="raised", cursor="hand2")
+                pixel.grid(row=row, column=col, padx=1, pady=1)
+                pixel.bind("<Button-1>", self.handle_pixel_click)
 
-if mode == "Free Draw":
-    # Display the drawing canvas
-    st.markdown("## Drawing Canvas")
-    canvas_result = st_canvas(
-        fill_color="rgba(0, 0, 0, 0)",
-        stroke_width=2,
-        stroke_color=selected_color,
-        background_color="#FFFFFF",
-        width=canvas_width,
-        height=canvas_height,
-        drawing_mode="freedraw",
-        key="canvas",
-    )
+    def handle_pixel_click(self, event):
+        pixel = event.widget
+        if self.current_tool == "draw":
+            pixel.configure(bg=self.current_color)
+        elif self.current_tool == "erase":
+            pixel.configure(bg='#888')
 
-    # Save the drawn canvas to the layers
-    if canvas_result.image_data is not None:
-        for layer in st.session_state.layers:
-            if layer['visible']:
-                layer['data'] = canvas_result.image_data
+    def select_tool(self, tool):
+        self.current_tool = tool.lower()
+        if self.current_tool == "color picker":
+            self.pick_color()
 
-elif mode == "Pixel Art":
-    st.markdown("## Pixel Art Canvas")
-    pixel_size = st.sidebar.slider("Pixel Size", 5, 50, 20)
-    rows = st.sidebar.number_input("Rows", min_value=5, max_value=100, value=st.session_state.pixel_art_dimensions[0])
-    cols = st.sidebar.number_input("Columns", min_value=5, max_value=100, value=st.session_state.pixel_art_dimensions[1])
+    def select_color(self, color):
+        self.current_color = color
+        self.color_display.configure(bg=self.current_color)
 
-    if st.session_state.pixel_art is None or st.session_state.pixel_art_dimensions != (rows, cols):
-        st.session_state.pixel_art_dimensions = (rows, cols)
-        st.session_state.pixel_art = [[(255, 255, 255) for _ in range(cols)] for _ in range(rows)]
+    def pick_color(self):
+        color_code = askcolor(title="Choose color")[1]
+        if color_code:
+            self.select_color(color_code)
 
-    canvas = Image.new("RGB", (cols * pixel_size, rows * pixel_size), (255, 255, 255))
-    draw = ImageDraw.Draw(canvas)
+    def change_canvas_size(self, event):
+        new_width = simpledialog.askinteger("Input", "Enter new width:", minvalue=1, maxvalue=100, initialvalue=self.canvas_size[0])
+        new_height = simpledialog.askinteger("Input", "Enter new height:", minvalue=1, maxvalue=100, initialvalue=self.canvas_size[1])
 
-    for row in range(rows):
-        for col in range(cols):
-            color = st.session_state.pixel_art[row][col]
-            draw.rectangle([col * pixel_size, row * pixel_size, (col + 1) * pixel_size, (row + 1) * pixel_size], fill=color, outline=(200, 200, 200))
+        if new_width and new_height:
+            self.canvas_size = (new_width, new_height)
+            self.canvas_size_label.configure(text=f"Canvas Size: {new_width}x{new_height}")
+            for widget in self.pixel_grid.winfo_children():
+                widget.destroy()
+            self.create_grid()
 
-    click_data = st_canvas(
-        fill_color="rgba(0, 0, 0, 0)",
-        stroke_width=0,
-        stroke_color=selected_color,
-        background_image=canvas,
-        width=cols * pixel_size,
-        height=rows * pixel_size,
-        drawing_mode="none",
-        key="pixel_canvas",
-    )
+    def export_art(self):
+        export_window = tk.Toplevel(self.root)
+        export_window.title("Export Art")
+        canvas = tk.Canvas(export_window, width=self.canvas_size[0]*22, height=self.canvas_size[1]*22)
+        canvas.pack()
 
-    if click_data.json_data is not None:
-        for obj in click_data.json_data["objects"]:
-            x = int(obj["left"] // pixel_size)
-            y = int(obj["top"] // pixel_size)
-            st.session_state.pixel_art[y][x] = selected_color
+        for row in range(self.canvas_size[1]):
+            for col in range(self.canvas_size[0]):
+                pixel = self.pixel_grid.grid_slaves(row=row, column=col)[0]
+                color = pixel.cget("bg")
+                canvas.create_rectangle(col*22, row*22, (col+1)*22, (row+1)*22, fill=color, outline=color)
 
-        # Redraw the canvas with the updated pixel art
-        for row in range(rows):
-            for col in range(cols):
-                color = st.session_state.pixel_art[row][col]
-                draw.rectangle([col * pixel_size, row * pixel_size, (col + 1) * pixel_size, (row + 1) * pixel_size], fill=color, outline=(200, 200, 200))
-        st.image(canvas, width=canvas_width)
+        export_button = tk.Button(export_window, text="Save as PNG", command=lambda: self.save_canvas_as_png(canvas))
+        export_button.pack(pady=10)
 
-# Save the NFT collection
-if st.button("Save NFT Collection"):
-    with open("nft_collection.json", "w") as f:
-        json.dump(st.session_state.saved_data, f)
-    st.success("NFT Collection and state saved successfully!")
+    def save_canvas_as_png(self, canvas):
+        canvas.postscript(file="pixel_art.eps")
+        from PIL import Image
+        img = Image.open("pixel_art.eps")
+        img.save("pixel_art.png")
+        img.show()
 
-# Load saved state
-if st.button("Load Saved State"):
-    try:
-        with open("nft_collection.json", "r") as f:
-            st.session_state.saved_data = json.load(f)
-        st.session_state.layers = st.session_state.saved_data.get("layers", [])
-        metadata = st.session_state.saved_data.get("metadata", {})
-        st.session_state.pixel_art = st.session_state.saved_data.get("pixel_art", None)
-        st.session_state.pixel_art_dimensions = st.session_state.saved_data.get("pixel_art_dimensions", (32, 32))
-        st.success("Saved state loaded successfully!")
-    except FileNotFoundError:
-        st.warning("No saved state found!")
-
-# Display the NFT collection
-st.markdown("## NFT Collection:")
-for i, nft in enumerate(st.session_state.saved_data.get("nft_collection", [])):
-    st.markdown(f"NFT {i+1}:")
-    for layer in st.session_state.layers:
-        if layer['data'] is not None:
-            st.image(layer['data'])
-    st.json(nft)
+if __name__ == "__main__":
+    root = tk.Tk()
+    editor = PixelArtEditor(root)
+    root.mainloop()
