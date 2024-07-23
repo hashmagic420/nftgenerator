@@ -3,6 +3,7 @@ from streamlit_drawable_canvas import st_canvas
 from PIL import Image, ImageOps, ImageDraw
 import json
 import io
+import numpy as np
 
 # Set up the app
 st.title("NFT Generator")
@@ -124,10 +125,23 @@ elif mode == "Pixel Art":
 
     st.image(canvas, width=canvas_width)
 
-    click_row = st.number_input("Row to Color", 0, rows - 1, 0, key="row_input")
-    click_col = st.number_input("Col to Color", 0, cols - 1, 0, key="col_input")
-    if st.button("Apply Color"):
-        st.session_state.pixel_art[click_row][click_col] = selected_color
+    # Handle clicks
+    click_data = st_canvas(
+        fill_color="rgba(0, 0, 0, 0)",
+        stroke_width=0,
+        stroke_color=selected_color,
+        background_image=canvas,
+        width=cols * pixel_size,
+        height=rows * pixel_size,
+        drawing_mode="none",
+        key="pixel_canvas",
+    )
+
+    if click_data.json_data["objects"]:
+        last_click = click_data.json_data["objects"][-1]
+        x = int(last_click["left"] // pixel_size)
+        y = int(last_click["top"] // pixel_size)
+        st.session_state.pixel_art[y][x] = selected_color
 
 # Save the NFT collection
 if st.button("Save NFT Collection"):
